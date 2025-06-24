@@ -14,15 +14,18 @@
   - 对索引设置**条件筛选**
      例：后台任务表 `Status` 有 `已执行`、`进行中`、`待处理` 三种状态，在业务处理中只会对`进行中`和`待处理`两种状态的任务数据进行处理，可以通过对该字段设置条件筛选，减少不必要的索引空间占用，优化查询效率。
 ```csharp
+//EFCore配置方式
 b.HasIndex(x => x.TaskStatus)
  .HasFilter($"{nameof(BackgroundTask.TaskStatus)} IN (0, 2)");
 ```
 ```sql
+--SqlServer命令
 CREATE INDEX IX_BackgroundTasks_TaskStatus ON BackgroundTasks(TaskStatus) WHERE TaskStatus IN (0,2);
 ```
 - 索引**包含列**
   对于经常使用会在查询中返回的列，又不适合添加到索引中的情况，可以添加到索引包含列中
 ```csharp
+//EFCore配置方式
 b.HasIndex(x => x.TaskStatus)
  .HasFilter($"{nameof(BackgroundTask.TaskStatus)} IN (0, 2)")
  .IncludeProperties(
@@ -31,6 +34,7 @@ b.HasIndex(x => x.TaskStatus)
  );
 ```
 ```sql
+--SqlServer命令
 CREATE NONCLUSTERED INDEX IX_BackgroundTasks_TaskStatus
 ON [LemonBackgroundTasks](TaskStatus)
 INCLUDE (TaskData,TaskIdentifier);

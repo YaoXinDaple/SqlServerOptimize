@@ -10,7 +10,7 @@
 - 区分度小的字段不建议创建索引，比如性别
 - 命名建议用索引的字段名作为名称，方便在查询计划中分辨，不建议添加“”之类的前缀，SQLServer索引名称允许跨表重名的
 
-  ## 索引的进一步优化使用
+## 索引的进一步优化使用
   - 对索引设置**条件筛选**
      例：后台任务表 `Status` 有 `已执行`、`进行中`、`待处理` 三种状态，在业务处理中只会对`进行中`和`待处理`两种状态的任务数据进行处理，可以通过对该字段设置条件筛选，减少不必要的索引空间占用，优化查询效率。
 ```csharp
@@ -43,6 +43,31 @@ INCLUDE (TaskData,TaskIdentifier);
 ## 两个列都有索引，查询时会走哪一个列的索引
 
 同样的查询条件，如果值不一样，走的索引也会变，因为查询计划会根据**索引统计信息**来判断先走哪个索引效率更高，查询计划会优先使用区分度更高的索引
+
+## 历史表 
+
+用于查询某个表在指定时间或时间段的原始数据，适合审计/防篡改等需求
+```sql
+CREATE TABLE dbo.Employee
+(
+	EmployeeID INT NOT NULL PRIMARY KEY CLUSTERED,
+	Name  NVARCHAR(100) NOT NULL,
+	Position VARCHAR(100) NOT NULL,
+	Department VARCHAR(100) NOT NULL,
+	Address NVARCHAR(1024) NOT NULL,
+	AnnualSalary DECIMAL(10,2)NOT NULL,
+	ValidFrom DATETIME2 GENERATED ALWAYS AS ROW START,
+	ValidTo DATETIME2 GENERATED ALWAYS AS ROW END,PERIOD FOR SYSTEM_TIME(ValidFrom,ValidTo)
+)
+WITH(SYSTEM_VERSIONING =ON(HISTORY_TABLE = dbo.EmployeeHistory))
+
+--Temporal queries*
+--FOR SYSTEM TIME
+--ALL,AS OF,BETWEEN..AND，FROM..TO,CONTAINED IN
+
+
+SELECT * FROM dbo.Employee FOR SYSTEM_TIME AS OF '2021-09-01 T10:00:00.7230011'
+```
 
 
 ## 冷热数据处理
